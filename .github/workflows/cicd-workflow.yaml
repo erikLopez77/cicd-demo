@@ -10,7 +10,7 @@ jobs:
 
     steps:
     - name: 'Checkout' #descarga nuestro code en la VM
-      uses: actions/checkout@v5.0.1
+      uses: actions/checkout@v4.8.0
 
     - name: 'Setup Java JDK' #descarga un JDK en la VM
       uses: actions/setup-java@v5.0.0
