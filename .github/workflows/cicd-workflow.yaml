@@ -27,6 +27,8 @@ jobs:
     # crea JAR file con ./gradlew assemble,place in build/libs
     - name: 'Assemble JAR'
       run: |
+        # Dar permisos primero
+        chmod +x ./gradlew
         ./gradlew assemble
     - name:  'Get Version Number'
       run: |
