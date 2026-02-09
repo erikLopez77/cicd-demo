@@ -7,12 +7,12 @@ jobs:
   build-job:
     name: Build Job
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: 'Checkout'
+    - name: 'Checkout' #descarga nuestro code en la VM
       uses: actions/checkout@v2
 
-    - name: 'Setup Java JDK'
+    - name: 'Setup Java JDK' #descarga un JDK en la VM
       uses: actions/setup-java@v1
       with:
         java-version: 11
@@ -24,3 +24,16 @@ jobs:
     - name: 'Start build job'
       run: |
         echo "Starting the build job"
+    # crea JAR file con ./gradlew assemble,place in build/libs
+    - name: 'Assemble JAR'
+      run: |
+        ./gradlew assemble
+    - name:  'Get Version Number'
+      run: |
+        echo "VERSION=$(./gradlew properties -q | grep "version:" | awk '{print $2}')" >> $GITHUB_ENV
+
+    - name: 'Publish JAR'
+      uses: actions/upload-artifact@v3-preview
+      with:
+        name: 'cicd-demo-${{env.VERSION}}-all.jar'
+        path: build/libs/*-all.jar
