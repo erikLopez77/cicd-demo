@@ -1,4 +1,5 @@
 plugins {
+    id("groovy")
     id("io.micronaut.application") version "4.6.1"
     id("com.gradleup.shadow") version "8.3.9"
     id("io.micronaut.aot") version "4.6.1"
@@ -35,7 +36,7 @@ graalvmNative.toolchainDetection = false
 
 micronaut {
     runtime("netty")
-    testRuntime("junit5")
+    testRuntime("spock2")
     processing {
         incremental(true)
         annotations("codes.recursive.*")

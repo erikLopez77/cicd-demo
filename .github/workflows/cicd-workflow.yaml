@@ -7,8 +7,47 @@ jobs:
   build-job:
     name: Build Job
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Start build job
+    - name: 'Checkout' #descarga nuestro code en la VM
+      uses: actions/checkout@v5.0.0
+
+    - name: 'Setup Java JDK' #descarga un JDK en la VM
+      uses: actions/setup-java@v5.0.0
+      with:
+        java-version: 21
+        distribution: 'temurin'
+
+    - name: 'Check Java Version'
+      run: |
+        java --version
+
+    - name: 'Start build job'
       run: |
         echo "Starting the build job"
+    - name: 'Run Tests'
+        run: |
+          ./gradlew test
+    - name: 'Publish Test Report'
+      if: always()
+      uses: actions/upload-artifact@v6.0.0
+      with:
+        name: 'test-report'
+        path: build/reports/test/test/*
+
+    # crea JAR file con ./gradlew assemble,place in build/libs
+    - name: 'Assemble JAR'
+      run: |
+        # Dar permisos primero
+        chmod +x ./gradlew
+        ./gradlew assemble
+
+    - name:  'Get Version Number'
+      run: |
+        echo "VERSION=$(./gradlew properties -q | grep "version:" | awk '{print $2}')" >> $GITHUB_ENV
+
+    - name: 'Publish JAR'
+      uses: actions/upload-artifact@v6.0.0
+      with:
+        name: 'cicd-demo-${{env.VERSION}}-all.jar'
+        path: build/libs/*-all.jar
