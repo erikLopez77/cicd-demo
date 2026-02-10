@@ -25,15 +25,16 @@ jobs:
     - name: 'Start build job'
       run: |
         echo "Starting the build job"
+
     - name: 'Run Tests'
-        run: |
+      run: |
           ./gradlew test
     - name: 'Publish Test Report'
       if: always()
       uses: actions/upload-artifact@v6.0.0
       with:
         name: 'test-report'
-        path: build/reports/test/test/*
+        path: build/reports/tests/test/*
 
     # crea JAR file con ./gradlew assemble,place in build/libs
     - name: 'Assemble JAR'
