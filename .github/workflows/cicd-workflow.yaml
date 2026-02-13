@@ -115,12 +115,13 @@ jobs:
         --query 'data [0]."public-ip"' \
         --raw-output \
         )" >> $GITHUB_ENV
+        echo Instance IP: ${{ env.INSTANCE_IP }}
     #esperar a que el servicio este disponible el servicio ssh, puede tardar
     - name: 'Wait for SSH'
       run: |
         while ! nc -w5 -z ${{ env.INSTANCE_IP }} 22; do
-        sleep 5
-        echo "SSH not available..."
+          sleep 5
+          echo "SSH not available..."
         done; echo "SSH ready!"
     #conecta por SSH la VM, detenemos cualquier instancia previa de la app
     - name: 'Stop App'
@@ -132,9 +133,9 @@ jobs:
         script: |
           pid=`ps aux | grep "[c]icd-demo.jar" | awk '{print $2}'`
           if [ "$pid" == "" ]; then
-          echo "Process not found"
+            echo "Process not found"
           else
-          kill -9 $pid
+            kill -9 $pid
           fi
           sudo mkdir -p /app
     #transferimos el jar file desde el runner a la VM
@@ -155,5 +156,18 @@ jobs:
         username: opc
         key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
         script: |
+          # Mover el JAR a su ubicación final
           sudo mv ~/app/cicd-demo-${{env.VERSION}}-all.jar /app/cicd-demo.jar
-          nohup java -jar /app/cicd-demo.jar > output.$(date --iso).log 2>&1 &
+
+          # Ejecutar en background con nohup (todo en una línea)
+          LOG_FILE="output-$(date --iso).log"
+          cd /app && nohup java -jar cicd-demo.jar > "$LOG_FILE" 2>&1 &
+
+          # Verificar que el proceso inició
+          sleep 2
+          if pgrep -f "cicd-demo.jar" > /dev/null; then
+            echo " Application started successfully"
+          else
+            echo " Failed to start application"
+            exit 1
+          fi
