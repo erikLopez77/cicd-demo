@@ -155,7 +155,5 @@ jobs:
         username: opc
         key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
         script: |
-          sudo mv ~/app/cicd-demo-${{env.VERSION}}-all.jar /app/
-          cicd-demo.jar
-          nohup java -jar /app/cicd-demo.jar > output.$
-          (date --iso).log 2>&1 &
+          sudo mv ~/app/cicd-demo-${{env.VERSION}}-all.jar /app/cicd-demo.jar
+          nohup java -jar /app/cicd-demo.jar > output.$(date --iso).log 2>&1 &
