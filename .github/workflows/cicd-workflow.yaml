@@ -79,14 +79,19 @@ jobs:
     #si existe VM en ejecucion, tomara su OCID para reutilizarlo
     - name: 'Check existing instance'
       run: |
-        echo "INSTANCE_OCID=$(\
-        oci compute instance list \
-        --lifecycle-state RUNNING \
-        --compartment-id ${{secrets.VM_COMPARTMENT_OCID}} \
-        --display-name cicd-demo \
-        --query "data[0].id" \
-        --raw-output \
-        )" >> $GITHUB_ENV
+          # Validar que el secreto no está vacío
+          if [ -z "${{ secrets.VM_COMPARTMENT_OCID }}" ]; then
+            echo "Error: VM_COMPARTMENT_OCID secret is empty or not set"
+            exit 1
+          fi
+          echo "INSTANCE_OCID=$(\
+          oci compute instance list \
+          --lifecycle-state RUNNING \
+          --compartment-id ${{secrets.VM_COMPARTMENT_OCID}} \
+          --display-name cicd-demo \
+          --query "data[0].id" \
+          --raw-output \
+          )" >> $GITHUB_ENV
     #si no existe, creamos una nueva OCI con la config especificada
     - name: 'Create instance'
       if: ${{!env.INSTANCE_OCID}}
