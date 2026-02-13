@@ -100,9 +100,9 @@ jobs:
       if: ${{!env.INSTANCE_OCID}}
       run: |
         echo "INSTANCE_OCID=$( \
+          oci compute intance launch \
           -c ${{secrets.VM_COMPARTMENT_OCID}} \
-          --availability-domain ${{secrets.VM_AVAILABILITY_
-          DOMAIN}} \
+          --availability-domain ${{secrets.VM_AVAILABILITY_DOMAIN}} \
           --shape ${{secrets.VM_SHAPE}} \
           --shape-config '{"memoryInGBs": 4,"ocpus":1}' \
           --assign-public-ip true \
