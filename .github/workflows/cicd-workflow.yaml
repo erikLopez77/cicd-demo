@@ -72,7 +72,7 @@ jobs:
         ./install.sh --accept-all-defaults
         echo "/home/runner/bin">> $GITHUB_PATH
         exec -l $SHELL
-    - name: 'Fix Config File Permissionis'
+    - name: 'Fix Config File Permissions'
       run: |
         oci setup repair-file-permissions --file /home/runner/.oci/config
         oci setup repair-file-permissions --file /home/runner/.oci/key.pem
@@ -102,7 +102,7 @@ jobs:
           --image-id ${{secrets.VM_CUSTOM_IMAGE_OCID}} \
           --ssh-authorized-keys-file /home/runner/.oci/id_vm.pub \
           --subnet-id ${{secrets.VM_SUBNET_OCID}} \
-          --wait-for-state  RUNNING \
+          --wait-for-state RUNNING \
           --query "data.id" \
           --raw-output \
         )" >> $GITHUB_ENV
