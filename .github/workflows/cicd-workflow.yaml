@@ -74,10 +74,8 @@ jobs:
         exec -l $SHELL
     - name: 'Fix Config File Permissionis'
       run: |
-        oci setup repair-file-permissions --file /home/runner/.
-        oci/config
-        oci setup repair-file-permissions --file /home/runner/.
-        oci/key.pem
+        oci setup repair-file-permissions --file /home/runner/.oci/config
+        oci setup repair-file-permissions --file /home/runner/.oci/key.pem
     #si existe VM en ejecucion, tomara su OCID para reutilizarlo
     - name: 'Check existing instance'
       run: |
