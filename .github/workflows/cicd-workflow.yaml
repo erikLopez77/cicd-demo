@@ -161,6 +161,26 @@ jobs:
         username: opc
         key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
         script: |
+          # Verificar si Java ya está instalado
+          if ! command -v java &> /dev/null; then
+            echo "=== Java no encontrado, instalando Java 21 ==="
+            sudo dnf install -y java-21-openjdk-devel
+          else
+            echo "=== Java ya está instalado, verificando versión ==="
+          fi
+          
+          # Verificar versión de Java
+          echo "=== Java version ==="
+          java -version
+          
+          # Verificar que sea Java 21 (opcional pero recomendado)
+          if java -version 2>&1 | grep -q "version \"21"; then
+            echo " Java 21 detectado correctamente"
+          else
+            echo " Advertencia: No se detectó Java 21"
+            java -version
+          fi
+
           # Mover el JAR a su ubicación final
           sudo mv ~/app/cicd-demo-${{env.VERSION}}-all.jar /app/cicd-demo.jar
 
