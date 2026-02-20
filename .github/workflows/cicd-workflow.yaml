@@ -163,11 +163,11 @@ jobs:
           else
             echo "=== Java ya está instalado, verificando versión ==="
           fi
-          
+
           # Verificar versión de Java
           echo "=== Java version ==="
           java -version
-          
+
           # Verificar que sea Java 21 (opcional pero recomendado)
           if java -version 2>&1 | grep -q "version \"21"; then
             echo " Java 21 detectado correctamente"
@@ -190,4 +190,4 @@ jobs:
           else
             echo " Failed to start application"
             exit 1
-          fi 
+          fi
