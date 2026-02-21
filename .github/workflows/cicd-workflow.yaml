@@ -89,10 +89,10 @@ jobs:
           )" >> $GITHUB_ENV
     #si no existe, creamos una nueva OCI con la config especificada
     - name: 'Create instance'
-      if: ${{!env.INSTANCE_OCID}}
+      if: ${{ env.INSTANCE_OCID == '' }}
       run: |
-        echo "INSTANCE_OCID=$( \
-          oci compute instance launch \
+        # Lanzamos la instancia y capturamos el ID directamente
+        NEW_ID=$(oci compute instance launch \
           -c ${{secrets.VM_COMPARTMENT_OCID}} \
           --availability-domain ${{secrets.VM_AVAILABILITY_DOMAIN}} \
           --shape ${{secrets.VM_SHAPE}} \
@@ -104,25 +104,35 @@ jobs:
           --subnet-id ${{secrets.VM_SUBNET_OCID}} \
           --wait-for-state RUNNING \
           --query "data.id" \
-          --raw-output \
-        )" >> $GITHUB_ENV
+          --raw-output)
+        
+        echo "INSTANCE_OCID=$NEW_ID" >> $GITHUB_ENV
     #obtenemos ip publica p/conectarnos via SSH/SCP
     - name: 'Get Instance IP'
       run: |
-        echo "INSTANCE_IP=$( \
-        oci compute instance list-vnics \
-        --instance-id ${{env.INSTANCE_OCID}} \
-        --query 'data[0]."public-ip"' \
-        --raw-output \
-        )" >> $GITHUB_ENV
-        echo "Instance IP: ${{ env.INSTANCE_IP }}"
+        # Agregamos un pequeño sleep para que la VNIC se asocie en OCI
+        sleep 10 
+        IP=$(oci compute instance list-vnics \
+          --instance-id ${{env.INSTANCE_OCID}} \
+          --query 'data[0]."public-ip"' \
+          --raw-output)
+        
+        if [ "$IP" == "null" ] || [ -z "$IP" ]; then
+          echo "Error: No se pudo obtener la IP pública"
+          exit 1
+        fi
+        
+        echo "INSTANCE_IP=$IP" >> $GITHUB_ENV
+        echo "Instance IP detectada: $IP"
     #esperar a que el servicio este disponible el servicio ssh, puede tardar
     - name: 'Wait for SSH'
       run: |
-        while ! nc -w5 -z ${{ env.INSTANCE_IP }} 22; do
+        echo "Esperando a ${{ env.INSTANCE_IP }}..."
+        timeout 300s bash -c 'until nc -w5 -z ${{ env.INSTANCE_IP }} 22; do
           sleep 5
-          echo "SSH not available..."
-        done; echo "SSH ready!"
+          echo "SSH not available yet..."
+        done'
+        echo "SSH ready!"
     #conecta por SSH la VM, detenemos cualquier instancia previa de la app
     - name: 'Stop App'
       uses: appleboy/ssh-action@v0.1.4
