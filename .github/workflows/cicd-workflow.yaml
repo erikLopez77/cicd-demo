@@ -59,7 +59,7 @@ jobs:
         echo "[DEFAULT]" > ~/.oci/config
         echo "user=${{secrets.OCI_USER_OCID}}" >> ~/.oci/config
         echo "fingerprint=${{secrets.OCI_FINGERPRINT}}" >>  ~/.oci/config
-        #echo "pass_phrase=${{secrets.OCI_PASSPHRASE}}" >> ~/.oci/config
+        echo "pass_phrase=${{secrets.OCI_PASSPHRASE}}" >> ~/.oci/config
         echo "region=${{secrets.OCI_REGION}}" >> ~/.oci/config
         echo "tenancy=${{secrets.OCI_TENANCY_OCID}}" >> ~/.oci/config
         echo "key_file=~/.oci/key.pem" >> ~/.oci/config
@@ -79,14 +79,50 @@ jobs:
     #si existe VM en ejecucion, tomara su OCID para reutilizarlo
     - name: 'Check existing instance'
       run: |
-          echo "INSTANCE_OCID=$(\
-          oci compute instance list \
-          --lifecycle-state RUNNING \
-          --compartment-id ${{secrets.VM_COMPARTMENT_OCID}} \
-          --display-name cicd-demo \
-          --query "data[0].id" \
-          --raw-output \
-          )" >> $GITHUB_ENV
+           echo "VM_COMPARTMENT_OCID existe: ${{ secrets.VM_COMPARTMENT_OCID != '' }}"
+
+            # Obtener el valor del secreto
+            COMPARTMENT_ID="${{ secrets.VM_COMPARTMENT_OCID }}"
+
+            if [ -z "$COMPARTMENT_ID" ]; then
+              echo " ERROR: VM_COMPARTMENT_OCID está vacío"
+              echo "Valor: '$COMPARTMENT_ID'"
+              echo "Verifica que el secreto está configurado en GitHub:"
+              echo "1. Settings → Secrets and variables → Actions"
+              echo "2. Busca VM_COMPARTMENT_OCID"
+              echo "3. Asegúrate que tiene un valor"
+              exit 1
+            fi
+
+            echo " VM_COMPARTMENT_OCID tiene valor: ${COMPARTMENT_ID:0:20}..."
+
+            # Verificar formato
+            if [[ "$COMPARTMENT_ID" == ocid1.compartment* ]]; then
+              echo " Formato correcto (compartimento)"
+            elif [[ "$COMPARTMENT_ID" == ocid1.tenancy* ]]; then
+              echo " FORMATO INCORRECTO: Esto es una TENENCIA, no un compartimento"
+              echo "Necesitas un OCID que empiece con: ocid1.compartment.oc1..."
+              exit 1
+            else
+              echo " FORMATO DESCONOCIDO: $COMPARTMENT_ID"
+            fi
+
+            # Intentar listar instancias
+            echo "=== Buscando instancias existentes ==="
+            INSTANCE_ID=$(oci compute instance list \
+              --lifecycle-state RUNNING \
+              --compartment-id "$COMPARTMENT_ID" \
+              --display-name cicd-demo \
+              --query "data[0].id" \
+              --raw-output 2>/dev/null || echo "")
+
+            if [ -n "$INSTANCE_ID" ]; then
+              echo " Instancia encontrada: $INSTANCE_ID"
+              echo "INSTANCE_OCID=$INSTANCE_ID" >> $GITHUB_ENV
+            else
+              echo " No se encontró instancia existente"
+              echo "INSTANCE_OCID=" >> $GITHUB_ENV
+            fi
     #si no existe, creamos una nueva OCI con la config especificada
     - name: 'Create instance'
       if: ${{ env.INSTANCE_OCID == '' }}
@@ -173,11 +209,11 @@ jobs:
           else
             echo "=== Java ya está instalado, verificando versión ==="
           fi
-          
+
           # Verificar versión de Java
           echo "=== Java version ==="
           java -version
-          
+
           # Verificar que sea Java 21 (opcional pero recomendado)
           if java -version 2>&1 | grep -q "version \"21"; then
             echo " Java 21 detectado correctamente"
@@ -200,4 +236,4 @@ jobs:
           else
             echo " Failed to start application"
             exit 1
-          fi 
+          fi
